@@ -1,0 +1,17 @@
+# Runtime-only dependencies for the Render web service.
+# torch is installed separately as the CPU-only wheel in render.yaml's build
+# command (the default PyPI wheel bundles CUDA and is ~2.5 GB), so it is NOT
+# listed here. Dev/notebook tooling (jupyterlab, matplotlib, pytest, ruff,
+# pyarrow) is omitted to keep the build small.
+requests>=2.32
+pandas>=2.2
+numpy>=1.26
+tqdm>=4.66
+typer>=0.12
+rich>=13.7
+pydantic>=2.7
+python-dotenv>=1.0
+poke-env>=0.9
+scikit-learn>=1.4
+flask>=3.0
+gunicorn>=22.0

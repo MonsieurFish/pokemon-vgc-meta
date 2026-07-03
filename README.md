@@ -2,18 +2,23 @@
 
 This folder is focused on representation learning for Pokemon VGC teambuilding.
 
-## Live demo
+## Deployment (Render)
 
-A static snapshot of the meta-projection dashboard — interactive Plotly charts
-(current-vs-predicted scatters, matchup-advantage graph, rotatable 3D PCA) — is
-hosted on GitHub Pages:
-**https://monsieurfish.github.io/pokemon-vgc-meta/**
+The full interactive app (all three tabs — meta projection, team rater, team
+completer) deploys to [Render](https://render.com) as a Python web service; see
+`render.yaml`. To deploy:
 
-GitHub Pages serves static files only, so the interactive **team rater**, **team
-completer**, and live tournament scraping (which run model inference on a Python
-backend) are not available there — run the full app locally with
-`python scripts/run_meta_app.py`. Regenerate the static snapshot with
-`python scripts/build_static_site.py`.
+1. In the Render dashboard: **New + → Blueprint**, connect this repo. Render
+   reads `render.yaml` and provisions the service (the build installs the
+   CPU-only torch wheel; the start command runs gunicorn).
+2. The frozen encoder and cached meta ship in the repo, so no extra setup is
+   needed. The first `/api` request loads the model and embeds the cached teams
+   (~30–60 s); later requests are fast.
+
+The service needs ~2 GB RAM (torch + embedding), so the blueprint requests
+Render's `standard` plan — the 512 MB free/starter tier will OOM.
+
+Run locally instead with `python scripts/run_meta_app.py` (http://127.0.0.1:8000).
 
 The current workflow is:
 

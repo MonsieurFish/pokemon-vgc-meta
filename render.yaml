@@ -1,0 +1,32 @@
+# Render Blueprint for the VGC Meta Forecaster web app.
+# In the Render dashboard: New + -> Blueprint -> connect this repo. Render reads
+# this file and provisions the service below.
+#
+# Notes:
+#  * torch is installed as the CPU-only wheel (the default PyPI wheel bundles
+#    CUDA and is ~2.5 GB, which blows past build limits).
+#  * The frozen encoder + cached meta data ship in the repo, so the app runs
+#    with no extra setup; the first /api request loads the model (~30-60 s).
+#  * `plan: standard` (2 GB RAM) is chosen because torch + embedding the cached
+#    teams needs well over the 512 MB free/starter tier (it will OOM there).
+services:
+  - type: web
+    name: vgc-meta-forecaster
+    runtime: python
+    plan: standard
+    region: oregon
+    branch: main
+    healthCheckPath: /
+    buildCommand: >-
+      pip install --upgrade pip &&
+      pip install torch --index-url https://download.pytorch.org/whl/cpu &&
+      pip install -r requirements-render.txt &&
+      pip install -e . --no-deps
+    startCommand: >-
+      gunicorn vgc_team.app.server:app
+      --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 180
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: PYTHONWARNINGS
+        value: ignore
