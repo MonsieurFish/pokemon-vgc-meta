@@ -1,0 +1,25 @@
+cluster_id,current_share,predicted_share,delta,pct_change,representative
+17,0.05327317863702774,0.060465890914201736,0.007192712277173996,0.13501563668251038,swampert | sableye | pelipper | archaludon | venusaur | sinistcha
+22,0.15288713574409485,0.1590004414319992,0.006113305687904358,0.039985742419958115,raichu | staraptor | grimmsnarl | sinistcha | garchomp | incineroar
+1,0.00032733380794525146,0.006268645636737347,0.005941311828792095,,garchomp | sylveon | whimsicott | incineroar | staraptor | gholdengo
+6,0.07954537123441696,0.08418240398168564,0.004637032747268677,0.05829418823122978,swampert | grimmsnarl | sinistcha | pelipper | archaludon | metagross
+7,0.11669798940420151,0.11986292153596878,0.003164932131767273,0.02712070755660534,kangaskhan | gardevoir | incineroar | charizard | garchomp | whimsicott
+0,0.0013093352317810059,0.0010805877391248941,-0.00022874749265611172,,tornadus | raging-bolt | ogerpon | flutter-mane | incineroar | urshifu
+2,0.0013093352317810059,0.0010805877391248941,-0.00022874749265611172,,miraidon | iron-hands | urshifu | ogerpon-hearthflame | farigiraf | whimsicott
+21,0.0013093352317810059,0.0010805877391248941,-0.00022874749265611172,,iron-hands | urshifu-rapid-strike | flutter-mane | heatran | rillaboom | tornadus
+16,0.0016366691561415792,0.0013507347321137786,-0.00028593442402780056,,koraidon | tornadus | rillaboom | incineroar | flutter-mane | urshifu-rapid-strike
+5,0.0016366691561415792,0.0013507347321137786,-0.00028593442402780056,,ursaluna | gallade | armarouge | indeedee-f | torkoal | zoroark-hisui
+20,0.0016366691561415792,0.0013507347321137786,-0.00028593442402780056,,amoonguss | landorus | urshifu-rapid-strike | chien-pao | ogerpon | raging-bolt
+4,0.001964002847671509,0.001620881725102663,-0.00034312112256884575,,floette-mega | maushold | garchomp | rotom-wash | aegislash | sneasler
+9,0.001964002847671509,0.001620881725102663,-0.00034312112256884575,,koraidon | umbreon | raging-bolt | flutter-mane | ogerpon-cornerstone | entei
+14,0.001964002847671509,0.001620881725102663,-0.00034312112256884575,,tinkaton | pelipper | basculegion | archaludon | amoonguss | toxicroak
+19,0.0022913366556167603,0.0018910286016762257,-0.0004003080539405346,,incineroar | landorus | rillaboom | registeel | cresselia | urshifu-rapid-strike
+18,0.0022913366556167603,0.0018910286016762257,-0.0004003080539405346,,electabuzz | incineroar | sinistcha | suicune | latios | kingambit
+12,0.0022913366556167603,0.0018910286016762257,-0.0004003080539405346,,calyrex-shadow-rider | rillaboom | incineroar | raging-bolt | ogerpon-hearthflame | urshifu-rapid-strike
+10,0.0022913366556167603,0.0018910286016762257,-0.0004003080539405346,,farigiraf | iron-hands | ogerpon-hearthflame | tornadus | ursaluna-bloodmoon | urshifu
+3,0.0022913366556167603,0.0018910286016762257,-0.0004003080539405346,,kingambit | rillaboom | volcarona | tauros-paldea-aqua | electabuzz | ninetales-alola
+23,0.0022913366556167603,0.0018910286016762257,-0.0004003080539405346,,entei | milotic | dragapult | whimsicott | chien-pao | chi-yu
+15,0.1627289056777954,0.16154888272285461,-0.001180022954940796,-0.0072514647617936134,charizard | garchomp | floette | basculegion | kingambit | whimsicott
+8,0.0949908122420311,0.09114588052034378,-0.003844931721687317,-0.040476880967617035,staraptor | grimmsnarl | sinistcha | mawile | torkoal | farigiraf
+13,0.20311333239078522,0.19645850360393524,-0.006654828786849976,-0.03276411443948746,gholdengo | basculegion | froslass | arcanine-hisui | kingambit | incineroar
+11,0.10795791447162628,0.09756365418434143,-0.010394260287284851,-0.09628067165613174,aerodactyl | kingambit | sylveon | farigiraf | charizard | garchomp

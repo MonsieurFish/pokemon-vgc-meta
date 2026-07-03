@@ -1,0 +1,17 @@
+{
+  "dataset_files": [
+    "logs_gen9championsvgc2026regma.json",
+    "logs_gen9championsvgc2026regmabo3.json"
+  ],
+  "max_battles": null,
+  "epochs": 100,
+  "early_stop_min_delta": 0.01,
+  "early_stop_patience": 1,
+  "batch_size": 128,
+  "learning_rate": 0.0003,
+  "d_model": 128,
+  "n_heads": 4,
+  "pokemon_layers": 2,
+  "team_layers": 2,
+  "seed": 7
+}

@@ -1,0 +1,33 @@
+# --- environments / caches ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+*.egg-info/
+.env
+.DS_Store
+build/
+dist/
+
+# --- LaTeX explainer (kept out of this repo on purpose) ---
+Pokemon_Meta_Explainer.tex
+Pokemon Meta Latex Explainer.md
+*.aux
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# --- large / regenerable data (rebuild via scripts in scripts/) ---
+data/raw/
+data/interim/
+data/playtest_replays/
+data/processed/team_knn/
+
+# Kept in the repo so the app runs out of the box:
+#   models/**  ·  data/processed/multi_reg/**  ·  data/processed/tournaments/**

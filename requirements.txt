@@ -1,0 +1,28 @@
+# Core data / scripting.
+requests>=2.32
+pandas>=2.2
+pyarrow>=16
+numpy>=1.26
+tqdm>=4.66
+typer>=0.12
+rich>=13.7
+pydantic>=2.7
+python-dotenv>=1.0
+
+# Modeling.
+torch>=2.3
+
+# Pokemon data utilities. The project uses poke-env's bundled GenData.
+poke-env>=0.9
+
+# Learning and debugging.
+jupyterlab>=4.2
+matplotlib>=3.8
+scikit-learn>=1.4
+
+# Web app (live meta forecaster). Frontend uses Plotly.js from CDN (no python dep).
+flask>=3.0
+
+# Local quality checks.
+pytest>=8.2
+ruff>=0.5

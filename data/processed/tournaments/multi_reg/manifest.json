@@ -1,0 +1,78 @@
+{
+  "regulations": [
+    {
+      "reg": "rege23",
+      "format_id": "gen9vgc2023rege",
+      "teams": 4710,
+      "start": "2023-11-21",
+      "end": "2024-01-02",
+      "mean_weight": 8.47
+    },
+    {
+      "reg": "regf24",
+      "format_id": "gen9vgc2024regf",
+      "teams": 7590,
+      "start": "2024-01-04",
+      "end": "2024-04-29",
+      "mean_weight": 8.34
+    },
+    {
+      "reg": "regg24",
+      "format_id": "gen9vgc2024regg",
+      "teams": 7157,
+      "start": "2024-05-01",
+      "end": "2024-08-30",
+      "mean_weight": 8.35
+    },
+    {
+      "reg": "regh24",
+      "format_id": "gen9vgc2024regh",
+      "teams": 5419,
+      "start": "2024-08-31",
+      "end": "2024-12-31",
+      "mean_weight": 8.44
+    },
+    {
+      "reg": "regg25",
+      "format_id": "gen9vgc2025regg",
+      "teams": 3907,
+      "start": "2025-01-06",
+      "end": "2025-04-21",
+      "mean_weight": 8.56
+    },
+    {
+      "reg": "regi25",
+      "format_id": "gen9vgc2025regi",
+      "teams": 3965,
+      "start": "2025-05-01",
+      "end": "2025-08-28",
+      "mean_weight": 8.54
+    },
+    {
+      "reg": "regj25",
+      "format_id": "gen9vgc2025regj",
+      "teams": 5130,
+      "start": "2025-09-01",
+      "end": "2026-01-03",
+      "mean_weight": 8.41
+    },
+    {
+      "reg": "regma26",
+      "format_id": "gen9championsvgc2026regma",
+      "teams": 14877,
+      "start": "2026-04-08",
+      "end": "2026-06-13",
+      "mean_weight": 8.17
+    },
+    {
+      "reg": "regmb26",
+      "format_id": "gen9championsvgc2026regmb",
+      "teams": 6233,
+      "start": "2026-06-18",
+      "end": "2026-06-30",
+      "mean_weight": 8.35
+    }
+  ],
+  "total_teams": 58988,
+  "n_regulations": 9
+}

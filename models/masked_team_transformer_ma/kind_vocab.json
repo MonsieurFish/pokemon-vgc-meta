@@ -1,0 +1,9 @@
+{
+  "pad": 0,
+  "type": 1,
+  "base_stat": 2,
+  "item": 3,
+  "ability": 4,
+  "nature": 5,
+  "move": 6
+}

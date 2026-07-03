@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VGC Meta Forecaster</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<style>
+  :root { --bg:#0f1420; --panel:#171e2e; --ink:#e6ebf5; --muted:#8b98b3; --accent:#5b8def; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  header { padding:18px 24px; border-bottom:1px solid #232c42; }
+  h1 { margin:0; font-size:20px; } .sub { color:var(--muted); font-size:13px; margin-top:2px; }
+  .wrap { max-width:1280px; margin:0 auto; padding:18px 24px; }
+  .controls { display:flex; gap:18px; align-items:center; flex-wrap:wrap;
+              background:var(--panel); padding:14px 16px; border-radius:10px; margin-bottom:14px; }
+  button { background:var(--accent); color:#fff; border:0; padding:9px 14px; border-radius:8px;
+           cursor:pointer; font-weight:600; } button:disabled { opacity:.5; cursor:wait; }
+  select, textarea { background:#0f1420; color:var(--ink); border:1px solid #2b3752; border-radius:6px; padding:6px 8px; }
+  .status { color:var(--muted); font-size:12.5px; }
+  .tabbar { display:flex; gap:6px; margin-bottom:16px; }
+  .tabbtn { background:var(--panel); color:var(--muted); border:1px solid #232c42; }
+  .tabbtn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  @media (max-width:960px){ .grid2 { grid-template-columns:1fr; } }
+  .card { background:var(--panel); border-radius:10px; padding:14px; }
+  .card h2 { margin:0 0 4px; font-size:14px; display:flex; justify-content:space-between; align-items:center; }
+  .card .cap { color:var(--muted); font-size:12px; margin-bottom:8px; }
+  table.t5 { width:100%; border-collapse:collapse; font-size:13px; margin-top:10px; }
+  table.t5 th { text-align:right; color:var(--muted); font-weight:600; font-size:11px;
+                text-transform:uppercase; border-bottom:1px solid #232c42; padding:4px 6px; }
+  table.t5 td { text-align:right; padding:5px 6px; border-bottom:1px solid #1d2536; }
+  table.t5 td:first-child, table.t5 th:first-child { text-align:left; }
+  .up { color:#5fd39a; } .down { color:#e77; }
+  .movers { font-size:12.5px; color:var(--muted); margin-top:10px; }
+  .rep { color:var(--muted); font-size:12px; }
+  input[type=range]{ width:170px; } code { color:#a9c2ff; }
+  .scores { display:flex; gap:16px; margin:12px 0; }
+  .score { background:#0f1420; border:1px solid #232c42; border-radius:10px; padding:14px 18px; flex:1; }
+  .score .n { font-size:30px; font-weight:700; } .score .l { color:var(--muted); font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>VGC Meta Forecaster</h1>
+  <div class="sub">Recent tournament teams → frozen encoder → glide-to-anchor forecast + matchup model.</div>
+</header>
+<div class="wrap">
+  <div class="controls">
+    <button id="fetch">↻ Fetch latest tournaments</button>
+    <label>Glide λ <input id="lam" type="range" min="0" max="0.6" step="0.05" value="0.3" />
+      <span id="lamval"><code>0.30</code></span></label>
+    <span class="status" id="status">loading…</span>
+  </div>
+
+  <div class="tabbar">
+    <button class="tabbtn active" data-tab="meta">Meta projection</button>
+    <button class="tabbtn" data-tab="rater">Team rater</button>
+    <button class="tabbtn" data-tab="complete">Team completer</button>
+  </div>
+
+  <!-- ============ META PROJECTION TAB ============ -->
+  <div class="pane" id="tab-meta">
+    <div class="grid2">
+      <div class="card">
+        <h2>Pokémon cores</h2>
+        <div class="cap">current vs predicted usage share · above diagonal = expanding</div>
+        <div id="scatterCores" style="height:400px;"></div>
+        <table class="t5"><thead id="topCoresHead"></thead><tbody id="topCores"></tbody></table>
+        <div class="movers" id="moversCores"></div>
+      </div>
+      <div class="card">
+        <h2>Team archetypes</h2>
+        <div class="cap">coarse families · current vs predicted share</div>
+        <div id="scatterArch" style="height:400px;"></div>
+        <table class="t5"><thead id="topArchHead"></thead><tbody id="topArch"></tbody></table>
+        <div class="movers" id="moversArch"></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h2>Matchup advantage
+          <select id="graphLevel"><option value="families">Team archetypes</option>
+            <option value="cores">Pokémon cores</option></select>
+        </h2>
+        <div class="cap">bubble size = share · colour = win vs field · arrow A→B = A favoured over B</div>
+        <div id="graph" style="height:460px;"></div>
+      </div>
+      <div class="card">
+        <h2>Meta space (3D — drag to rotate)</h2>
+        <div class="cap">bubble size = share · colour = predicted growth (green) / decline (red)</div>
+        <div id="space3d" style="height:460px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TEAM RATER TAB ============ -->
+  <div class="pane" id="tab-rater" style="display:none;">
+    <div class="card">
+      <h2>Rate a team against the meta</h2>
+      <div class="cap">Paste a <b>pokepast.es</b> link or a Showdown export. We score your team's win rate
+        against each archetype, then weight by usage share for an aggregate meta-matchup score
+        (current and predicted next week). Signal is modest — the matchup model is calibrated but ~0.58 AUC.</div>
+      <textarea id="paste" rows="4" style="width:100%;" placeholder="https://pokepast.es/xxxxxxxx   — or paste the Showdown export"></textarea>
+      <div style="margin-top:10px;"><button id="rateBtn">Rate team</button>
+        <span class="status" id="rateStatus"></span></div>
+    </div>
+
+    <div id="rateResults" style="display:none; margin-top:16px;">
+      <div class="card">
+        <div id="rateTeam"></div>
+        <div class="scores">
+          <div class="score"><div class="n" id="scoreCur">–</div><div class="l">win rate vs CURRENT meta</div></div>
+          <div class="score"><div class="n" id="scoreNext">–</div><div class="l">win rate vs PREDICTED next meta</div></div>
+        </div>
+      </div>
+      <div class="grid2" style="margin-top:16px;">
+        <div class="card">
+          <h2>Win rate vs each archetype</h2>
+          <div class="cap">x = archetype's share of the meta · y = your win rate · 50% line = even.
+            Points that are big &amp; to the right but below the line are your dangerous, popular matchups.</div>
+          <div id="rateScatter" style="height:420px;"></div>
+        </div>
+        <div class="card">
+          <h2>Breakdown</h2>
+          <table class="t5"><thead id="rateTableHead"></thead><tbody id="rateTable"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TEAM COMPLETER TAB ============ -->
+  <div class="pane" id="tab-complete" style="display:none;">
+    <div class="card">
+      <h2>Complete an unfinished team</h2>
+      <div class="cap">Paste an <b>incomplete</b> team — missing the 6th Pokémon, items, or moves (any level).
+        We find your worst archetype matchups and recommend fills (drawn from real current-meta sets) that
+        most improve them. It embeds many candidates, so it takes a few seconds.</div>
+      <textarea id="cpaste" rows="4" style="width:100%;" placeholder="Paste a pokepast.es link or a partial Showdown export"></textarea>
+      <div style="margin-top:10px;"><button id="completeBtn">Recommend completions</button>
+        <span class="status" id="completeStatus"></span></div>
+    </div>
+    <div id="completeResults" style="display:none; margin-top:16px;">
+      <div class="card"><div id="cTeam"></div><div class="movers" id="cWorst"></div></div>
+      <div id="cRecs"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const pct = (x) => (x*100).toFixed(1) + "%";
+const pt  = (x) => (x*100>=0?"+":"") + (x*100).toFixed(2);
+const dark = { paper_bgcolor:"#171e2e", plot_bgcolor:"#171e2e", font:{color:"#e6ebf5"}, margin:{l:52,r:12,t:12,b:44} };
+const coreName = (p)=> p.label || ("c"+p.id);
+const archName = (p)=> p.name;
+let LAST = null;
+
+// ---------- meta projection renderers ----------
+function renderScatter(div, pts, nameFn, labelThresh){
+  const vals = pts.flatMap(p=>[p.current,p.predicted]);
+  const mx = Math.max(0.01, ...vals) * 100 * 1.08;
+  const maxAbs = Math.max(1e-6, ...pts.map(p=>Math.abs(p.delta)));
+  Plotly.react(div,[{
+    x:pts.map(p=>p.current*100), y:pts.map(p=>p.predicted*100), mode:"markers+text", type:"scatter",
+    marker:{ size:12, color:pts.map(p=>p.delta), colorscale:"RdYlGn", cmin:-maxAbs, cmax:maxAbs, cmid:0,
+             line:{width:1,color:"#0f1420"}, colorbar:{title:"Δ", thickness:8} },
+    text:pts.map(p=> Math.max(p.current,p.predicted)>=labelThresh ? nameFn(p) : ""),
+    textposition:"top center", textfont:{size:9,color:"#c7d2ee"},
+    customdata:pts.map(p=>[nameFn(p), pct(p.current), pct(p.predicted), pt(p.delta)]),
+    hovertemplate:"<b>%{customdata[0]}</b><br>%{customdata[1]} → %{customdata[2]} (%{customdata[3]} pt)<extra></extra>",
+  }], Object.assign({}, dark, {
+    xaxis:{title:"current share %", rangemode:"tozero", gridcolor:"#232c42", range:[0,mx]},
+    yaxis:{title:"predicted next-week share %", rangemode:"tozero", gridcolor:"#232c42", range:[0,mx]},
+    shapes:[{type:"line", x0:0,y0:0,x1:mx,y1:mx, line:{dash:"dot",color:"#5b8def",width:1}}],
+    showlegend:false }), {displayModeBar:false});
+}
+function renderTop5(head, body, pts, nameFn, unit){
+  head.innerHTML = `<tr><th>${unit}</th><th>now</th><th>next</th><th>Δpt</th></tr>`;
+  body.innerHTML = pts.map(p=>
+    `<tr><td>${nameFn(p)}</td><td>${pct(p.current)}</td><td>${pct(p.predicted)}</td>`+
+    `<td class="${p.delta>=0?'up':'down'}">${pt(p.delta)}</td></tr>`).join("");
+}
+function renderMovers(div, pts, nameFn){
+  const s = [...pts].sort((a,b)=>b.delta-a.delta);
+  const line = (p)=>`<span class="${p.delta>=0?'up':'down'}">${pt(p.delta)}</span> ${nameFn(p)}`;
+  div.innerHTML = "▲ " + s.slice(0,3).map(line).join(" · ") + "<br>▼ " + s.slice(-3).reverse().map(line).join(" · ");
+}
+function renderGraph(g){
+  const div = $("graph");
+  if(!g || !g.nodes.length){ Plotly.purge(div); div.innerHTML="<div class='cap'>matchup model unavailable</div>"; return; }
+  const N = g.nodes; const short=(s)=> s.length>16 ? s.slice(0,15)+"…" : s;
+  const trace = { x:N.map(n=>n.x), y:N.map(n=>n.y), mode:"markers+text", type:"scatter",
+    marker:{ size:N.map(n=>16+64*Math.sqrt(n.share)), color:N.map(n=>n.field_winrate),
+             colorscale:"RdYlGn", cmin:0.45, cmax:0.55, cmid:0.5, line:{width:1.5,color:"#0f1420"},
+             colorbar:{title:"vs field", thickness:8} },
+    text:N.map(n=>short(n.label)), textposition:"bottom center", textfont:{size:9,color:"#c7d2ee"},
+    customdata:N.map(n=>[n.label, pct(n.share), n.field_winrate.toFixed(3)]),
+    hovertemplate:"<b>%{customdata[0]}</b><br>share %{customdata[1]} · win vs field %{customdata[2]}<extra></extra>" };
+  const ann = g.edges.map(e=>{
+    const s = e.advantage - 0.5;                       // matchup edge strength (small)
+    const op = Math.min(1, 0.7 + 9*s);                 // stay high-contrast even when weak
+    return { ax:N[e.source].x, ay:N[e.source].y, x:N[e.target].x, y:N[e.target].y,
+      xref:"x", yref:"y", axref:"x", ayref:"y", showarrow:true,
+      arrowhead:3, arrowsize:1.6, arrowwidth:2 + 13*s,
+      arrowcolor:"rgba(125,195,255,"+op.toFixed(2)+")", standoff:16, startstandoff:9 };
+  });
+  Plotly.react(div,[trace], Object.assign({}, dark, { showlegend:false,
+    xaxis:{visible:false, range:[-1.4,1.4]}, yaxis:{visible:false, range:[-1.4,1.4], scaleanchor:"x"},
+    annotations:ann, margin:{l:10,r:10,t:10,b:10} }), {displayModeBar:false});
+}
+function render3D(anchors, clusters){
+  const maxCur = Math.max(1e-6, ...anchors.map(a=>a.current));
+  const maxAbs = Math.max(1e-6, ...anchors.map(a=>Math.abs(a.delta)));
+  const A = { type:"scatter3d", mode:"markers", x:anchors.map(a=>a.x), y:anchors.map(a=>a.y), z:anchors.map(a=>a.z),
+    marker:{ size:anchors.map(a=>3+22*Math.sqrt(a.current/maxCur)), color:anchors.map(a=>a.delta),
+             colorscale:"RdYlGn", cmin:-maxAbs, cmax:maxAbs, cmid:0, opacity:0.85, colorbar:{title:"Δ", thickness:8} },
+    text:anchors.map(a=> a.label ? a.label.split(" | ").slice(0,2).join(" / ") : ("anchor "+a.id)), hoverinfo:"text" };
+  const C = { type:"scatter3d", mode:"text", x:clusters.map(c=>c.x), y:clusters.map(c=>c.y), z:clusters.map(c=>c.z),
+    text:clusters.map(c=>c.label), textfont:{size:9,color:"#c7d2ee"}, hoverinfo:"skip" };
+  Plotly.react($("space3d"), [A,C], Object.assign({}, dark, { showlegend:false,
+    scene:{ bgcolor:"#171e2e", xaxis:{visible:false}, yaxis:{visible:false}, zaxis:{visible:false} },
+    margin:{l:0,r:0,t:0,b:0} }), {displayModeBar:false, responsive:true});
+}
+function render(d){
+  LAST = d;
+  renderScatter($("scatterCores"), d.cores, coreName, 0.03);
+  renderScatter($("scatterArch"),  d.archetypes, archName, 0);
+  renderTop5($("topCoresHead"), $("topCores"), d.top_cores, coreName, "core");
+  renderTop5($("topArchHead"),  $("topArch"),  d.top_archetypes, archName, "archetype");
+  renderMovers($("moversCores"), d.cores.filter(c=>c.current>=0.01), coreName);
+  renderMovers($("moversArch"),  d.archetypes, archName);
+  renderGraph($("graphLevel").value === "cores" ? d.matchup_cores : d.matchup_families);
+  render3D(d.anchors3d, d.clusters3d);
+  const last = d.week_labels[d.week_labels.length-1] || "?";
+  $("status").textContent = `${d.n_teams.toLocaleString()} teams · ${d.n_weeks} weeks · after ${last} · ${d.label}`;
+}
+
+// ---------- team rater ----------
+function renderRating(d){
+  $("rateResults").style.display="block";
+  $("rateTeam").innerHTML = `<b>${d.team_species}</b> <span class="rep">(looks like: ${d.team_family})</span>`;
+  $("scoreCur").textContent  = (d.aggregate.current_by_cluster*100).toFixed(1)+"%";
+  $("scoreNext").textContent = (d.aggregate.predicted_by_cluster*100).toFixed(1)+"%";
+  const A = d.archetypes, mx = Math.max(0.01, ...A.map(a=>a.current))*100*1.08;
+  Plotly.react("rateScatter",[{
+    x:A.map(a=>a.current*100), y:A.map(a=>a.winrate*100), mode:"markers+text", type:"scatter",
+    marker:{ size:A.map(a=>14+52*Math.sqrt(a.current)), color:A.map(a=>a.winrate),
+      colorscale:"RdYlGn", cmin:0.4, cmax:0.6, cmid:0.5, line:{width:1,color:"#0f1420"}, colorbar:{title:"win", thickness:8} },
+    text:A.map(a=>a.name), textposition:"top center", textfont:{size:9,color:"#c7d2ee"},
+    customdata:A.map(a=>[a.name, pct(a.current), (a.winrate*100).toFixed(1)]),
+    hovertemplate:"<b>%{customdata[0]}</b><br>share %{customdata[1]} · you win %{customdata[2]}%<extra></extra>"
+  }], Object.assign({}, dark, {
+    xaxis:{title:"archetype share of meta %", rangemode:"tozero", gridcolor:"#232c42", range:[0,mx]},
+    yaxis:{title:"your win rate %", gridcolor:"#232c42"},
+    shapes:[{type:"line", x0:0,y0:50, x1:mx,y1:50, line:{dash:"dot",color:"#5b8def",width:1}}],
+    showlegend:false }), {displayModeBar:false});
+  $("rateTableHead").innerHTML = `<tr><th>archetype</th><th>you win</th><th>now</th><th>next</th></tr>`;
+  $("rateTable").innerHTML = A.map(a=>
+    `<tr><td>${a.name}</td><td class="${a.winrate>=0.5?'up':'down'}">${(a.winrate*100).toFixed(1)}%</td>`+
+    `<td>${pct(a.current)}</td><td>${pct(a.predicted)}</td></tr>`).join("");
+}
+async function rate(){
+  const paste = $("paste").value.trim();
+  if(!paste){ $("rateStatus").textContent="paste a link or export first"; return; }
+  $("rateBtn").disabled=true; $("rateStatus").textContent="rating…";
+  try{
+    const r = await fetch("/api/rate", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({paste, lam:+$("lam").value})});
+    const d = await r.json();
+    if(!d.ok){ $("rateStatus").textContent = "⚠ "+d.error; }
+    else { renderRating(d); $("rateStatus").textContent=""; }
+  }catch(e){ $("rateStatus").textContent="error: "+e; }
+  finally{ $("rateBtn").disabled=false; }
+}
+
+// ---------- team completer ----------
+function renderCompletion(d){
+  $("completeResults").style.display="block";
+  $("cTeam").innerHTML = `<b>${d.team_species}</b> <span class="rep">(${d.n_pokemon}/6 Pokémon)</span>`;
+  const worst = d.worst_archetypes.map(w=>`${w.name} ${(w.base_winrate*100).toFixed(0)}%`).join(" · ");
+  $("cWorst").innerHTML = `Worst matchups: <b>${worst}</b> · your current win rate vs these: <b>${(d.base_aggregate*100).toFixed(1)}%</b>`;
+  if(d.complete){ $("cRecs").innerHTML = `<div class="card" style="margin-top:16px;">No empty slots — this team is already complete.</div>`; return; }
+  const wn = d.worst_archetypes.map(w=>w.name);
+  $("cRecs").innerHTML = d.recommendations.map(rec=>{
+    const rows = rec.options.map(o=>{
+      const per = wn.map(n=>(o.per_archetype[n]*100).toFixed(0)).join(" / ");
+      return `<tr><td>${o.label}</td><td>${(o.winrate_vs_worst*100).toFixed(1)}%</td>`+
+        `<td class="${o.delta>=0?'up':'down'}">${pt(o.delta)}</td><td class="rep">${per}</td></tr>`;
+    }).join("");
+    return `<div class="card" style="margin-top:16px;"><h2>${rec.slot}</h2>`+
+      `<table class="t5"><thead><tr><th>option</th><th>vs worst</th><th>Δ</th><th>${wn.join(" / ")}</th></tr></thead>`+
+      `<tbody>${rows}</tbody></table></div>`;
+  }).join("");
+}
+async function complete(){
+  const paste = $("cpaste").value.trim();
+  if(!paste){ $("completeStatus").textContent="paste a link or export first"; return; }
+  $("completeBtn").disabled=true; $("completeStatus").textContent="analysing candidates… (a few seconds)";
+  try{
+    const r = await fetch("/api/complete", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({paste, lam:+$("lam").value})});
+    const d = await r.json();
+    if(!d.ok){ $("completeStatus").textContent = "⚠ "+d.error; }
+    else { renderCompletion(d); $("completeStatus").textContent=""; }
+  }catch(e){ $("completeStatus").textContent="error: "+e; }
+  finally{ $("completeBtn").disabled=false; }
+}
+
+// ---------- data + tabs ----------
+async function load(url, btn){
+  if(btn){ btn.disabled=true; $("status").textContent="working…"; }
+  try{ const r = await fetch(url); render(await r.json()); }
+  catch(e){ $("status").textContent="error: "+e; }
+  finally{ if(btn) btn.disabled=false; }
+}
+function showTab(name){
+  document.querySelectorAll(".pane").forEach(p=> p.style.display = (p.id==="tab-"+name)?"block":"none");
+  document.querySelectorAll(".tabbtn").forEach(b=> b.classList.toggle("active", b.dataset.tab===name));
+  if(name==="meta" && LAST) render(LAST);  // resize plots that were hidden
+}
+document.querySelectorAll(".tabbtn").forEach(b=> b.addEventListener("click", ()=>showTab(b.dataset.tab)));
+$("lam").addEventListener("input", ()=>{ const v=(+$("lam").value).toFixed(2);
+  $("lamval").innerHTML=`<code>${v}</code>`; load(`/api/forecast?lam=${v}`); });
+$("fetch").addEventListener("click", ()=> load(`/api/refresh?source=live&lam=${$("lam").value}`, $("fetch")));
+$("graphLevel").addEventListener("change", ()=>{ if(LAST) renderGraph(
+  $("graphLevel").value==="cores" ? LAST.matchup_cores : LAST.matchup_families); });
+$("rateBtn").addEventListener("click", rate);
+$("completeBtn").addEventListener("click", complete);
+load(`/api/forecast?lam=0.3`);
+</script>
+</body>
+</html>
